@@ -1,0 +1,13 @@
+*.*
+
+!.gitignore
+!.gitmodules
+
+!*.cpp
+!*.h
+
+!Makefile
+!*.md
+!*.mak
+!*.txt
+!*.rc
