@@ -6,7 +6,7 @@
 !*.cpp
 !*.h
 
-!Makefile
+!**/Makefile
 !*.md
 !*.mak
 !*.txt
