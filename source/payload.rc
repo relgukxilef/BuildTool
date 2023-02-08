@@ -9,9 +9,9 @@
 
 #include <detver.h>
 
-#define VER_INTERNALNAME_STR        "trcbld" DETOURS_STRINGIFY(DETOURS_BITS)
-#define VER_ORIGINALFILENAME_STR    "trcbld" DETOURS_STRINGIFY(DETOURS_BITS) ".dll"
-#define VER_FILEDESCRIPTION_STR     "Detours Build Tracing Module"
-#define VER_COMPANYNAME_STR         "Microsoft Corporation"
+#define VER_INTERNALNAME_STR        "payload"
+#define VER_ORIGINALFILENAME_STR    "payload.dll"
+#define VER_FILEDESCRIPTION_STR     "Build Tools"
+#define VER_COMPANYNAME_STR         "Felix Kugler"
 
 #include "common.ver"
