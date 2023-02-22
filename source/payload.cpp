@@ -756,8 +756,6 @@ VOID EnvVars::Dump()
 
     LockAcquire();
 
-    Tblog("<t:Vars>\n");
-
     // Remove any variables that match the original environment.
     PCWSTR pwzz = s_Payload.wzzEnvironment;
     while (*pwzz) {
@@ -796,18 +794,11 @@ VOID EnvVars::Dump()
     for (DWORD n = 0; n < s_nVars; n++) {
         EnvInfo *pInfo = pSorted[n];
 
-        if (pInfo == NULL) {
-            Print("<!-- Warning: Missing %d of %d -->\n", n, s_nVars);
-            continue;
-        }
-
         if (pInfo->m_fUsed && pInfo->m_pwzVal[0]) {
-            Print("<t:Var var=\"%le\">%le</t:Var>\n", pInfo->m_pwzVar, pInfo->m_pwzVal);
+            Print("V\"%le\",\"%le\"\n", pInfo->m_pwzVar, pInfo->m_pwzVal);
         }
     }
     GlobalFree((HGLOBAL)pSorted);
-
-    Tblog("</t:Vars>\n");
 
     LockRelease();
 }
@@ -906,7 +897,7 @@ ProcInfo * Procs::Create(HANDLE hProc, DWORD nProcId)
     slot.m_hProc = hProc;
     slot.m_nProcId = nProcId;
     slot.m_nProc = s_nProcs;
-    Print("<!-- CreateProcess (%d)-->\n", slot.m_nProc);
+    Print("P%d\n", slot.m_nProc);
     LockRelease();
 
     return &slot;
@@ -920,7 +911,7 @@ BOOL Procs::Close(HANDLE hProc)
     ProcInfo& slot = HashToSlot(hProc);
     if (slot.m_hProc == hProc) {
         first = true;
-        Print("<!-- CloseProcess (%d)-->\n", slot.m_nProc);
+        Print("E%d\n", slot.m_nProc);
         slot.m_hProc = INVALID_HANDLE_VALUE;
         slot.m_nProcId = 0;
         slot.m_nProc = 0;
@@ -1356,8 +1347,6 @@ VOID FileNames::Dump()
 
     LockAcquire();
 
-    Tblog("<t:Files>\n");
-
     FileInfo ** pSorted = (FileInfo **)GlobalAlloc(GPTR, s_nFiles * sizeof(FileInfo *));
 
     for (DWORD n = 0; n < s_nCapacity; n++) {
@@ -1373,7 +1362,6 @@ VOID FileNames::Dump()
         FileInfo *pInfo = pSorted[n];
 
         if (pInfo == NULL) {
-            Print("<!-- Warning: Missing %d of %d -->\n", n, s_nFiles);
             continue;
         }
 
@@ -1385,7 +1373,6 @@ VOID FileNames::Dump()
 
 #if 0
         if (fDelete && !fRead && !fWrite) {
-            Print("<!-- Discarding: %ls -->\n", pInfo->m_pwzPath);
             // Discard pipe files only passed to children.
             continue;
         }
@@ -1420,7 +1407,6 @@ VOID FileNames::Dump()
         ParameterizeName(wzPath, ARRAYSIZE(wzPath), pInfo);
 
         if (pInfo->m_fDirectory) {
-            Print("<t:File mkdir=\"true\">%ls</t:File>\n", wzPath);
             continue;
         }
 
@@ -1429,43 +1415,24 @@ VOID FileNames::Dump()
             continue;
         }
 
+        if (fRead) {
+            Print("R%s", wzPath);
+        }
+        if (fWrite || fAppend) {
+            Print("W%s", wzPath);
+        }
+
         if (pInfo->m_pbContent == NULL ||
             pInfo->m_fDelete ||
             pInfo->m_fCleanup ||
             pInfo->m_fWrite) {
 
-            Print("<t:File%s%s%s%s%s>%ls</t:File>\n",
-                  fRead ? " read=\"true\"" : "",
-                  fWrite ? " write=\"true\"" : "",
-                  fDelete ? " delete=\"true\"" : "",
-                  fCleanup ? " cleanup=\"true\"" : "",
-                  fAppend ? " append=\"true\"" : "",
-                  // size=\"%d\" pInfo->m_cbContent,
-                  wzPath);
         }
         else if ((pInfo->m_pbContent)[0] == 0xff && (pInfo->m_pbContent)[1] == 0xfe) {
             // Unicode
-            Print("<t:File%s%s%s%s%s>%ls<t:Data>%le</t:Data></t:File>\n",
-                  fRead ? " read=\"true\"" : "",
-                  fWrite ? " write=\"true\"" : "",
-                  fDelete ? " delete=\"true\"" : "",
-                  fCleanup ? " cleanup=\"true\"" : "",
-                  fAppend ? " append=\"true\"" : "",
-                  //  size=\"%d\" pInfo->m_cbContent,
-                  wzPath,
-                  RemoveReturns((PWCHAR)pInfo->m_pbContent));
         }
         else {
             // Ascii
-            Print("<t:File%s%s%s%s%s>%ls<t:Data>%he</t:Data></t:File>\n",
-                  fRead ? " read=\"true\"" : "",
-                  fWrite ? " write=\"true\"" : "",
-                  fDelete ? " delete=\"true\"" : "",
-                  fCleanup ? " cleanup=\"true\"" : "",
-                  fAppend ? " append=\"true\"" : "",
-                  //  size=\"%d\" pInfo->m_cbContent,
-                  wzPath,
-                  RemoveReturns((PCHAR)pInfo->m_pbContent));
         }
 
         if (pInfo->m_pbContent != NULL) {
@@ -1474,8 +1441,6 @@ VOID FileNames::Dump()
         }
     }
     GlobalFree((HGLOBAL)pSorted);
-
-    Tblog("</t:Files>\n");
 
     LockRelease();
 }
